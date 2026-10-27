@@ -65,6 +65,15 @@ _ALIASES = {
     "GER40": "^GDAXI", "GER30": "^GDAXI", "DE40": "^GDAXI",
     "UK100": "^FTSE", "JP225": "^N225", "JPN225": "^N225",
     "FRA40": "^FCHI", "EU50": "^STOXX50E", "HK50": "^HSI",
+    # Indian indices (served by the "india" vendor, Yahoo spellings as canonical)
+    "NIFTY": "^NSEI", "NIFTY50": "^NSEI", "IN50": "^NSEI",
+    "BANKNIFTY": "^NSEBANK", "NIFTYBANK": "^NSEBANK",
+    "FINNIFTY": "NIFTY_FIN_SERVICE.NS", "MIDCPNIFTY": "NIFTY_MID_SELECT.NS",
+    "NIFTYIT": "^CNXIT", "SENSEX": "^BSESN", "INDIAVIX": "^INDIAVIX",
+    # MCX / NFO futures (not on Yahoo; Kite continuous near-month)
+    "MCXGOLD": "GOLD.MCX", "GOLDMINI": "GOLDM.MCX", "MCXGOLDM": "GOLDM.MCX",
+    "MCXSILVER": "SILVER.MCX", "MCXCRUDE": "CRUDEOIL.MCX", "MCXNG": "NATURALGAS.MCX",
+    "NIFTYFUT": "NIFTY.NFO", "BANKNIFTYFUT": "BANKNIFTY.NFO",
 }
 
 # HKEX codes as Yahoo spells them: the number zero-padded to 4 digits (#957).

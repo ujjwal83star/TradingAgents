@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from tradingagents.dataflows.date_window import is_historical
+from tradingagents.dataflows.vendors.india.instruments import resolve as resolve_india_instrument
 from tradingagents.dataflows.vendors.yahoo.fundamentals import get_company_profile
 
 logger = logging.getLogger(__name__)
@@ -76,10 +77,18 @@ def resolve_instrument_identity(ticker: str) -> dict:
     (``XAUUSD`` -> ``GC=F``, #983).
     """
     try:
-        return _identity(ticker)
+        identity = dict(_identity(ticker))
     except Exception as exc:  # noqa: BLE001 — fail open, never block the run
         logger.debug("Could not resolve instrument identity for %s: %s", ticker, exc)
-        return {}
+        identity = {}
+    # MCX/NFO futures (and Yahoo outages on Indian indices) still get a
+    # deterministic name, so agents never guess which instrument they price.
+    if "company_name" not in identity:
+        india = resolve_india_instrument(ticker)
+        if india is not None:
+            identity.update({"company_name": india.display, "exchange": india.kite_exchange,
+                             "quote_type": india.kind.upper()})
+    return identity
 
 
 @functools.lru_cache(maxsize=256)

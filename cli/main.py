@@ -194,5 +194,27 @@ def logout(plan: Annotated[Plan, typer.Argument(help="The plan to sign out of")]
         console.print("Not signed in to ChatGPT.")
 
 
+@app.command("kite-login")
+def kite_login(
+    request_token: Annotated[str | None, typer.Option(help="request_token from the Kite redirect, if not captured automatically")] = None,
+    port: Annotated[int | None, typer.Option(help="Local redirect port (Kite app redirect URL: http://127.0.0.1:<port>/)")] = None,
+    no_browser: Annotated[bool, typer.Option("--no-browser", help="Print the login URL instead of opening it")] = False,
+):
+    """Sign in to Zerodha Kite for today's Indian market data (run once per trading day)."""
+    from dotenv import load_dotenv
+
+    from tradingagents.dataflows.errors import VendorNotConfiguredError
+    from tradingagents.dataflows.vendors.india.login import KiteLoginError, sign_in
+
+    load_dotenv()
+    try:
+        user, path = sign_in(request_token=request_token, port=port, open_browser=not no_browser,
+                             say=lambda line: console.print(line, soft_wrap=True, markup=False, highlight=False))
+    except (KiteLoginError, VendorNotConfiguredError) as exc:
+        console.print(f"[red]{escape(str(exc))}[/red]")
+        raise typer.Exit(code=1) from None
+    console.print(f"[green]Kite signed in{' as ' + escape(user) if user else ''}; token saved to {escape(path)}.[/green]")
+
+
 if __name__ == "__main__":
     app()

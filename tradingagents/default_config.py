@@ -156,8 +156,10 @@ def build_default_config() -> dict:
         # routed to vendors you didn't choose. For ordered fallback, list several,
         # e.g. "yfinance,alpha_vantage". "default" uses all available vendors.
         "data_vendors": {
-            "core_stock_apis": "yfinance",       # Options: alpha_vantage, yfinance
-            "technical_indicators": "yfinance",  # Options: alpha_vantage, yfinance
+            # "india" serves NSE/BSE indices & equities, MCX and NFO futures
+            # (Kite -> Investing.com -> Yahoo) and passes every other symbol on.
+            "core_stock_apis": "india,yfinance",       # Options: india, alpha_vantage, yfinance
+            "technical_indicators": "india,yfinance",  # Options: india, alpha_vantage, yfinance
             # Statements come from SEC EDGAR as filed (US filers), then Yahoo; the
         # overview and insider tools, which SEC EDGAR does not serve, from Yahoo.
         "fundamental_data": "sec_edgar,yfinance",  # Options: sec_edgar, alpha_vantage, yfinance
@@ -166,6 +168,9 @@ def build_default_config() -> dict:
             "prediction_markets": "polymarket",  # Options: polymarket (keyless)
         },
         # Tool-level configuration (takes precedence over category-level)
+        # Source order inside the "india" vendor: kite (KITE_API_KEY + daily token),
+        # investing (keyless, Cloudflare-prone), yahoo (indices/equities only).
+        "india_data_sources": os.getenv("INDIA_DATA_SOURCES") or "kite,investing,yahoo",
         "tool_vendors": {
             # Example: "get_stock_data": "alpha_vantage",  # Override category default
         },
@@ -182,6 +187,10 @@ def build_default_config() -> dict:
         "benchmark_map": {
             ".NS":  "^NSEI",       # NSE India (Nifty 50)
             ".BO":  "^BSESN",      # BSE India (Sensex)
+            ".MCX": "^NSEI",       # MCX futures, scored against Nifty 50
+            ".NFO": "^NSEI",       # NSE F&O futures
+            "^NSEBANK": "^NSEI",   # Indian sector indices vs Nifty 50
+            "^CNXIT": "^NSEI",
             ".T":   "^N225",       # Tokyo (Nikkei 225)
             ".TW":  "^TWII",       # Taiwan (TAIEX)
             ".TWO": "^TWII",       # Taipei OTC (TPEx has no Yahoo index; TAIEX)

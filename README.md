@@ -157,6 +157,23 @@ For local models with Ollama:
 docker compose --profile ollama run --rm tradingagents-ollama
 ```
 
+### Indian markets (NSE / BSE / MCX / NFO)
+
+The `india` data vendor (default first in `core_stock_apis` and `technical_indicators`) serves
+Indian instruments and passes everything else on to yfinance. Sources, in order
+(`INDIA_DATA_SOURCES`, default `kite,investing,yahoo`):
+
+| Source | Needs | Covers |
+|---|---|---|
+| Zerodha Kite Connect | `KITE_API_KEY`, `KITE_API_SECRET`, daily `tradingagents kite-login` | indices, equities, MCX & NFO futures (continuous near-month, with OI) |
+| Investing.com | nothing (ids in `INVESTING_IDS`) | NIFTY 50, NIFTY BANK, any id you add |
+| Yahoo Finance | nothing | indices and `.NS`/`.BO` equities |
+
+Tickers: `NIFTY`, `BANKNIFTY`, `FINNIFTY`, `SENSEX`, `INDIAVIX`, `RELIANCE.NS`, `TCS.BO`,
+`GOLD.MCX` / `MCXGOLD`, `GOLDM.MCX`, `SILVER.MCX`, `CRUDEOIL.MCX`, `NIFTY.NFO`, `BANKNIFTY.NFO`.
+Plain `GOLD` stays COMEX (`GC=F`). Install the Kite client with `pip install ".[india]"`, set the
+Kite app's redirect URL to `http://127.0.0.1:5000/`, then run `tradingagents kite-login` each trading day.
+
 ### Required APIs
 
 TradingAgents supports multiple LLM providers. Set the API key for your chosen provider:
