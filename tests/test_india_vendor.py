@@ -236,19 +236,29 @@ def test_investing_cloudflare_is_an_outage(monkeypatch):
         investing.fetch_daily(instruments.resolve("NIFTY"), date(2025, 1, 1), date(2025, 1, 3))
 
 
-def test_login_capture_returns_without_waiting_for_timeout():
+def test_login_capture_returns_without_waiting_for_timeout(monkeypatch):
     import threading
     import time as _t
-    import urllib.request
 
     from tradingagents.dataflows.vendors.india import login
 
-    def hit():
-        _t.sleep(0.3)
-        urllib.request.urlopen("http://127.0.0.1:5987/?status=success&request_token=abc", timeout=5).read()
+    class FakeServer:
+        def __init__(self, addr, handler):
+            self.handler = handler
+        def handle_request(self):
+            h = object.__new__(self.handler)
+            h.path = "/?status=success&request_token=abc"
+            h.send_response = h.send_header = h.end_headers = lambda *a: None
+            h.wfile = type("W", (), {"write": lambda self, b: None})()
+            h.do_GET()
+        def server_close(self):
+            pass
 
-    threading.Thread(target=hit, daemon=True).start()
+    monkeypatch.setattr(login, "HTTPServer", FakeServer)
     start = _t.monotonic()
     assert login._capture_request_token(5987, timeout=30) == "abc"
-    assert _t.monotonic() - start < 5
-    assert not [t for t in threading.enumerate() if isinstance(t, threading.Timer) and t.is_alive()]
+    assert _t.monotonic() - start < 2
+    timers = [t for t in threading.enumerate() if isinstance(t, threading.Timer)]
+    for t in timers:
+        t.join(1)
+    assert all(t.daemon or not t.is_alive() for t in timers)
