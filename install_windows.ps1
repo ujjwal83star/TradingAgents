@@ -40,7 +40,7 @@ if (-not (Test-Path "$Dir\.git")) {
 }
 
 # 3. venv + install with Kite extra
-uv venv -q --python 3.13 .venv
+if (-not (Test-Path .venv\Scripts\python.exe)) { uv venv -q --python 3.13 .venv }
 uv pip install -q --python .venv\Scripts\python.exe -e ".[india]"
 
 # 4. .env (existing values kept; given keys written in)
