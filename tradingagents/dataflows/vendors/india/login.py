@@ -44,11 +44,14 @@ def _capture_request_token(port: int, timeout: float) -> str:
     server = HTTPServer(("127.0.0.1", port), Handler)
     server.timeout = 1.0
     stop = threading.Event()
-    threading.Timer(timeout, stop.set).start()
+    timer = threading.Timer(timeout, stop.set)
+    timer.daemon = True  # never keep the process alive after sign-in
+    timer.start()
     try:
         while "token" not in box and not stop.is_set():
             server.handle_request()
     finally:
+        timer.cancel()
         server.server_close()
     if "token" not in box:
         raise KiteLoginError(f"no Kite redirect reached http://127.0.0.1:{port}/ within {int(timeout)}s")

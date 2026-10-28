@@ -234,3 +234,21 @@ def test_investing_cloudflare_is_an_outage(monkeypatch):
     monkeypatch.setattr(investing.requests, "get", lambda *a, **k: R())
     with pytest.raises(VendorUnavailableError):
         investing.fetch_daily(instruments.resolve("NIFTY"), date(2025, 1, 1), date(2025, 1, 3))
+
+
+def test_login_capture_returns_without_waiting_for_timeout():
+    import threading
+    import time as _t
+    import urllib.request
+
+    from tradingagents.dataflows.vendors.india import login
+
+    def hit():
+        _t.sleep(0.3)
+        urllib.request.urlopen("http://127.0.0.1:5987/?status=success&request_token=abc", timeout=5).read()
+
+    threading.Thread(target=hit, daemon=True).start()
+    start = _t.monotonic()
+    assert login._capture_request_token(5987, timeout=30) == "abc"
+    assert _t.monotonic() - start < 5
+    assert not [t for t in threading.enumerate() if isinstance(t, threading.Timer) and t.is_alive()]
