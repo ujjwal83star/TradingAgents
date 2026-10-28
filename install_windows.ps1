@@ -55,6 +55,9 @@ function Set-EnvLine($name, $value) {
     if (-not $hit) { $lines += "$name=$value" }
     Set-Content .env $lines
 }
+foreach ($k in "ANTHROPIC_API_KEY","KITE_API_KEY","KITE_API_SECRET") {
+    if (-not (Select-String -Path .env -Pattern "^$k=" -Quiet)) { Set-EnvLine $k " " ; (Get-Content .env) -replace "^$k= $", "$k=" | Set-Content .env }
+}
 Set-EnvLine "ANTHROPIC_API_KEY" $AnthropicKey
 Set-EnvLine "KITE_API_KEY" $KiteApiKey
 Set-EnvLine "KITE_API_SECRET" $KiteApiSecret
@@ -62,8 +65,14 @@ Set-EnvLine "KITE_API_SECRET" $KiteApiSecret
 # 5. launchers
 "@echo off`r`ncd /d `"$Dir`"`r`ncall .venv\Scripts\activate.bat`r`ntradingagents %*" |
     Set-Content -Encoding ASCII "$Dir\ta.bat"
-"@echo off`r`ncd /d `"$Dir`"`r`ncall .venv\Scripts\activate.bat`r`ntradingagents kite-login" |
-    Set-Content -Encoding ASCII "$Dir\kite-login.bat"
+@"
+@echo off
+cd /d "$Dir"
+schtasks /Query /TN "TradingAgents Kite Login" >nul 2>&1 || schtasks /Create /F /TN "TradingAgents Kite Login" /SC WEEKLY /D MON,TUE,WED,THU,FRI /ST $KiteLoginTime /TR "\"$Dir\kite-login.bat\"" >nul
+call .venv\Scripts\activate.bat
+tradingagents kite-login
+if errorlevel 1 pause
+"@ | Set-Content -Encoding ASCII "$Dir\kite-login.bat"
 
 # 6. weekday Kite sign-in task (opens the Kite login page; token is captured automatically)
 if ($KiteApiKey -and -not $NoKiteTask) {
